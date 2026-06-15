@@ -37,8 +37,12 @@ class IntervalsDailyData:
     atl: Optional[float] = None
     form: Optional[float] = None
     sleep_score: Optional[float] = None
+    sleep_seconds: Optional[float] = None
+    hrv_sdnn: Optional[float] = None
     hrv: Optional[float] = None
     resting_hr: Optional[float] = None
+    weight: Optional[float] = None
+    subjective_fatigue: Optional[float] = None
 
 
 class IntervalsIcuClient:
@@ -134,8 +138,12 @@ class IntervalsIcuClient:
                 atl=data.get("atl"),
                 form=data.get("form"),
                 sleep_score=data.get("sleepScore"),
+                sleep_seconds=data.get("sleepSecs"),
+                hrv_sdnn=data.get("hrvSDNN"),
                 hrv=data.get("hrvSDNN"),
-                resting_hr=data.get("restingHR")
+                resting_hr=data.get("restingHR"),
+                weight=data.get("weight"),
+                subjective_fatigue=data.get("fatigue")
             ))
 
         return daily_data

@@ -8,20 +8,30 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useAuthStore } from '@/lib/auth-store'
 import { apiClient } from '@/lib/api'
 import { successToast, errorToast } from '@/lib/toast'
+import { 
+  Link2, 
+  LogOut, 
+  User, 
+  Calendar, 
+  Database, 
+  RefreshCw, 
+  ChevronRight,
+  ExternalLink,
+  Info,
+  CheckCircle2,
+  AlertCircle,
+  Settings
+} from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, logout } = useAuthStore()
   const [apiKey, setApiKey] = useState('')
   const [athleteId, setAthleteId] = useState('')
-  const [syncStatus, setSyncStatus] = useState<{
-    activity_count: number
-    daily_state_count: number
-    latest_activity_date: string | null
-  } | null>(null)
+  const [syncStatus, setSyncStatus] = useState<any>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [hasSavedCredentials, setHasSavedCredentials] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [hasSavedCredentials, setHasSavedCredentials] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -35,7 +45,7 @@ export default function SettingsPage() {
       if (settings.intervals_athlete_id) setAthleteId(settings.intervals_athlete_id)
       setHasSavedCredentials(settings.has_credentials || false)
     } catch {
-      // Ignore
+      // 静默失败
     }
   }
 
@@ -44,7 +54,7 @@ export default function SettingsPage() {
       const status = await apiClient.getSyncStatus() as any
       setSyncStatus(status)
     } catch {
-      // Ignore
+      // 静默失败
     }
   }
 
@@ -55,7 +65,6 @@ export default function SettingsPage() {
     }
 
     setIsSaving(true)
-
     try {
       await apiClient.updateSettings({
         intervals_api_key: apiKey,
@@ -72,7 +81,6 @@ export default function SettingsPage() {
 
   const handleSync = async () => {
     setIsSyncing(true)
-
     try {
       if (hasSavedCredentials) {
         await apiClient.syncWithSavedCredentials(90)
@@ -94,184 +102,207 @@ export default function SettingsPage() {
   }
 
   const isConnected = syncStatus && syncStatus.activity_count > 0
+  const totalActivities = syncStatus?.activity_count || 0
+  const dataQuality = totalActivities >= 20 ? 'good' : totalActivities >= 10 ? 'medium' : 'limited'
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-4">
       <div className="text-center mb-2">
-        <h1 className="text-lg font-medium text-gray-800">设置</h1>
+        <h1 className="text-lg font-semibold text-gray-800">设置</h1>
       </div>
 
+      {/* 用户信息卡片 */}
       <Card className="border-0 shadow-sm bg-white">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-medium text-gray-800">数据源连接</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-lg">📊</span>
-              </div>
-              <div>
-                <div className="font-medium text-gray-800">Intervals.icu</div>
-                <div className="text-sm text-gray-500">训练数据分析平台</div>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+              <User className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-bold text-gray-800 text-lg">{user?.name || '运动爱好者'}</h2>
+              <p className="text-sm text-gray-500">{user?.email || ''}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs">
+                  Pro
+                </Badge>
+                <span className="text-xs text-gray-400">
+                  加入于 {user?.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '-'}
+                </span>
               </div>
             </div>
-            <Badge variant="secondary" className={isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-              {isConnected ? '已连接' : '未连接'}
-            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 数据源连接卡片 */}
+      <Card className="border-0 shadow-sm bg-white">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-medium text-gray-800 flex items-center gap-2">
+            <Link2 className="w-5 h-5 text-emerald-600" />
+            数据源连接
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 space-y-4">
+          {/* 连接状态卡片 */}
+          <div className={`p-4 rounded-xl ${isConnected ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100' : 'bg-gray-50'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isConnected ? 'bg-emerald-100' : 'bg-gray-200'}`}>
+                  {isConnected ? (
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  ) : (
+                    <AlertCircle className="w-6 h-6 text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">Intervals.icu</p>
+                  <p className="text-sm text-gray-500">
+                    {isConnected ? '已连接，数据同步正常' : '未连接'}
+                  </p>
+                </div>
+              </div>
+              <Badge 
+                variant="secondary" 
+                className={isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}
+              >
+                {isConnected ? '已连接' : '未连接'}
+              </Badge>
+            </div>
+
+            {isConnected && (
+              <div className="mt-4 pt-4 border-t border-emerald-100 grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <p className="text-xl font-bold text-emerald-700">{syncStatus?.activity_count || 0}</p>
+                  <p className="text-xs text-emerald-600/70">训练记录</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-emerald-700">{syncStatus?.daily_state_count || 0}</p>
+                  <p className="text-xs text-emerald-600/70">健康数据天</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-emerald-700">
+                    {dataQuality === 'good' ? '好' : dataQuality === 'medium' ? '中' : '少'}
+                  </p>
+                  <p className="text-xs text-emerald-600/70">数据质量</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {isConnected && syncStatus && (
-            <div className="text-sm text-gray-600 space-y-1 p-3 bg-emerald-50 rounded-lg">
-              <div>已同步活动：{syncStatus.activity_count} 条</div>
-              <div>体能数据：{syncStatus.daily_state_count} 天</div>
-              {syncStatus.latest_activity_date && (
-                <div>最新活动：{new Date(syncStatus.latest_activity_date).toLocaleDateString('zh-CN')}</div>
-              )}
-            </div>
-          )}
-
+          {/* 配置表单 */}
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 API Key
               </label>
               <input
                 type="text"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                placeholder="1gzdnhjs6ya48kx0zgb3m22ap"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-all"
+                placeholder="输入从 Intervals.icu 获取的 API Key"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Athlete ID
               </label>
               <input
                 type="text"
                 value={athleteId}
                 onChange={(e) => setAthleteId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                placeholder="i212288"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-all"
+                placeholder="例如: i212288"
               />
-             </div>
+            </div>
+          </div>
 
-             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
-               <h4 className="text-sm font-medium text-emerald-800 mb-2">📖 如何获取 Intervals.icu 凭据？</h4>
-               <ol className="text-xs text-emerald-700 space-y-1 list-decimal list-inside">
-                 <li>登录 <a href="https://intervals.icu" target="_blank" rel="noopener noreferrer" className="underline">intervals.icu</a>，连接你的运动平台（Strava/Garmin 等）</li>
-                 <li>点击右上角头像 → Settings → API Keys</li>
-                 <li>创建一个新的 API Key（只读权限即可）</li>
-                 <li>回到 Settings 页面，点击你的名字，查看页面 URL 中的 Athlete ID（如 i212288）</li>
-               </ol>
-               <p className="text-xs text-emerald-600 mt-2">💡 数据同步后会自动计算您的训练能力和风险评估</p>
-             </div>
-           </div>
-
-           <div className="flex gap-2">
+          {/* 按钮组 */}
+          <div className="flex gap-3">
             <Button
-              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white relative overflow-hidden"
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700"
               onClick={handleSaveSettings}
               disabled={isSaving}
             >
               {isSaving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                  保存中...
-                </span>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                '保存设置'
+                <Settings className="w-4 h-4 mr-2" />
               )}
+              保存设置
             </Button>
             <Button
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white relative overflow-hidden"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={handleSync}
               disabled={isSyncing}
             >
               {isSyncing ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                  同步中...
-                </span>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                isConnected ? '重新同步' : '同步数据'
+                <RefreshCw className="w-4 h-4 mr-2" />
               )}
+              同步数据
             </Button>
           </div>
 
-          {hasSavedCredentials && (
-            <p className="text-xs text-emerald-600 text-center">
-              ✓ 凭据已保存，下次可直接同步
-            </p>
-          )}
-
-
-
-          <p className="text-xs text-gray-500 text-center">
-            连接后将同步您的训练数据、负荷指标和恢复数据
-          </p>
+          {/* 配置说明 */}
+          <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-800 mb-1">如何获取凭据？</p>
+                <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>登录 <a href="https://intervals.icu" target="_blank" className="underline inline-flex items-center gap-0.5">intervals.icu <ExternalLink className="w-3 h-3" /></a> 账号</li>
+                  <li>进入 Settings → API Keys 创建新密钥</li>
+                  <li>点击你的名字，在 URL 中查看 Athlete ID</li>
+                </ol>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
+      {/* 关于 AthleteOS */}
       <Card className="border-0 shadow-sm bg-white">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-medium text-gray-800">用户信息</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <Info className="w-4 h-4 text-emerald-600" />
+            </div>
+            <span className="font-medium text-gray-800">关于</span>
+          </div>
+          
           <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">邮箱</span>
-              <span className="text-gray-800 font-medium">{user?.email || '-'}</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-sm text-gray-600">版本</span>
+              <span className="text-sm font-medium text-gray-800">MVP v1.1</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">姓名</span>
-              <span className="text-gray-800 font-medium">{user?.name || '未设置'}</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-sm text-gray-600">训练引擎</span>
+              <span className="text-sm font-medium text-gray-800">v1.0</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">主项运动</span>
-              <span className="text-gray-800 font-medium">跑步</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">数据等级</span>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                B 级 - 较稳定
-              </Badge>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">注册时间</span>
-              <span className="text-gray-800 font-medium">
-                {user?.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '-'}
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-gray-600">数据来源</span>
+              <span className="text-sm font-medium text-gray-800 flex items-center gap-1">
+                Intervals.icu API
+                <ChevronRight className="w-4 h-4 text-gray-400" />
               </span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm bg-white">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-medium text-gray-800">关于</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between items-center py-2 border-b">
-            <span className="text-gray-600">版本</span>
-            <span className="text-gray-800 font-medium">MVP v1.1</span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="text-gray-600">引擎版本</span>
-            <span className="text-gray-800 font-medium">Training Engine v1.0</span>
-          </div>
-        </CardContent>
-      </Card>
-
+      {/* 退出登录按钮 */}
       <Button
         variant="destructive"
-        className="w-full bg-red-500 hover:bg-red-600 text-white"
+        className="w-full bg-red-50 hover:bg-red-100 text-red-600 border-0 shadow-none"
         onClick={() => setShowLogoutConfirm(true)}
       >
+        <LogOut className="w-4 h-4 mr-2" />
         退出登录
       </Button>
 
+      {/* 退出确认弹窗 */}
       <ConfirmDialog
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
@@ -280,7 +311,7 @@ export default function SettingsPage() {
           logout()
         }}
         title="确认退出登录"
-        message="确定要退出当前账号吗？下次需要重新登录才能使用。"
+        message="确定要退出当前账号吗？下次登录需要重新输入密码。"
         confirmText="确认退出"
         cancelText="取消"
       />

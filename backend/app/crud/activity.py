@@ -123,3 +123,30 @@ def get_daily_tss_for_acwr(
         )
         daily_tss.append(day_tss)
     return daily_tss
+
+
+def update_daily_wellness_state(
+    db: Session,
+    user_id: int,
+    date_val: date,
+    **kwargs
+) -> DailyAthleteState:
+    """更新或创建用户每日健康状态"""
+    db_state = get_daily_state(db, user_id, date_val)
+    if db_state:
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(db_state, key, value)
+        db.commit()
+        db.refresh(db_state)
+        return db_state
+    else:
+        db_state = DailyAthleteState(
+            user_id=user_id,
+            date=date_val,
+            **kwargs
+        )
+        db.add(db_state)
+        db.commit()
+        db.refresh(db_state)
+        return db_state

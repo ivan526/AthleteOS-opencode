@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import type { HistoryDataPoint } from '@/lib/types'
 
-interface LoadTrendChartProps {
+interface WeightTrendChartProps {
   data: HistoryDataPoint[]
 }
 
-export function LoadTrendChart({ data }: LoadTrendChartProps) {
+export function WeightTrendChart({ data }: WeightTrendChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   if (!data || data.length < 2) {
@@ -18,19 +18,33 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
     )
   }
 
-  const maxValue = Math.max(...data.map(d => Math.max(d.ctl, d.atl))) * 1.15
+  const values = data.map(d => d.weight || 0).filter(v => v > 0)
+  if (values.length === 0) {
+    return (
+      <div className="h-80 flex items-center justify-center text-gray-500 text-sm">
+        暂无体重数据
+      </div>
+    )
+  }
+
+  const minValue = Math.min(...values) - 0.5
+  const maxValue = Math.max(...values) + 0.5
+  const range = maxValue - minValue
 
   const chartWidth = 100
   const chartHeight = 85
   const bottomMargin = 18
 
   const getX = (index: number) => chartWidth * 0.08 + (index / (data.length - 1)) * chartWidth * 0.85
-  const getY = (value: number) => bottomMargin + (1 - value / maxValue) * chartHeight
+  const getY = (value: number | null) => {
+    if (!value) return bottomMargin + chartHeight
+    return bottomMargin + (1 - (value - minValue) / range) * chartHeight
+  }
 
-  const createPath = (key: 'ctl' | 'atl') => {
+  const createPath = () => {
     return data.map((d, i) => {
       const x = getX(i)
-      const y = getY(d[key])
+      const y = getY(d.weight)
       return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
     }).join(' ')
   }
@@ -39,6 +53,9 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
     const d = new Date(dateStr)
     return `${d.getMonth() + 1}/${d.getDate()}`
   }
+
+  const latestWeight = data[data.length - 1].weight || 0
+  const avgWeight = values.reduce((a, b) => a + b, 0) / values.length
 
   return (
     <div>
@@ -62,36 +79,27 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
             />
           ))}
 
-          {/* CTL 线 - 绿色 */}
+          {/* 趋势线 */}
           <path 
-            d={createPath('ctl')} 
+            d={createPath()} 
             fill="none" 
-            stroke="#10b981" 
+            stroke="#8b5cf6" 
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* ATL 线 - 琥珀色 */}
-          <path 
-            d={createPath('atl')} 
-            fill="none" 
-            stroke="#f59e0b" 
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* CTL 数据点 */}
+          {/* 数据点 */}
           {data.map((d, i) => {
+            if (!d.weight) return null
             const isHovered = hoveredIndex === i
             return (
               <circle
-                key={`ctl-${i}`}
+                key={i}
                 cx={getX(i)}
-                cy={getY(d.ctl)}
+                cy={getY(d.weight)}
                 r={isHovered ? 3.2 : 2.2}
-                fill="#10b981"
+                fill="#8b5cf6"
                 stroke="white"
                 strokeWidth="1"
                 onMouseEnter={() => setHoveredIndex(i)}
@@ -100,19 +108,6 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
               />
             )
           })}
-
-          {/* ATL 数据点 */}
-          {data.map((d, i) => (
-            <circle
-              key={`atl-${i}`}
-              cx={getX(i)}
-              cy={getY(d.atl)}
-              r="1.8"
-              fill="#f59e0b"
-              stroke="white"
-              strokeWidth="0.8"
-            />
-          ))}
 
           {/* X轴日期标签 */}
           {data.filter((_, i) => i % Math.ceil(data.length / 6) === 0 || i === data.length - 1).map((d, idx) => {
@@ -134,22 +129,15 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
         </svg>
 
         {/* 悬停提示 */}
-        {hoveredIndex !== null && (
+        {hoveredIndex !== null && data[hoveredIndex].weight && (
           <div 
             className="absolute top-3 right-3 bg-white shadow-xl rounded-lg px-4 py-2.5 text-sm border border-gray-200 z-10"
           >
             <div className="text-gray-500 text-xs mb-1.5 font-medium">
               {formatDate(data[hoveredIndex].date_val)}
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                <span className="font-bold text-emerald-600 text-base">CTL {data[hoveredIndex].ctl.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                <span className="font-bold text-amber-600 text-base">ATL {data[hoveredIndex].atl.toFixed(1)}</span>
-              </div>
+            <div className="font-bold text-violet-600 text-base">
+              {data[hoveredIndex].weight?.toFixed(1)} kg
             </div>
           </div>
         )}
@@ -158,34 +146,30 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
       {/* 图例 */}
       <div className="flex justify-center gap-8 mt-2">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-          <span className="text-xs text-gray-600 font-medium">CTL (体能)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-          <span className="text-xs text-gray-600 font-medium">ATL (疲劳)</span>
+          <div className="w-3 h-3 rounded-full bg-violet-500"></div>
+          <span className="text-xs text-gray-600 font-medium">体重 (kg)</span>
         </div>
       </div>
 
       {/* 底部统计 */}
       <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
         <div className="text-center">
-          <div className="text-xl font-bold text-emerald-600">
-            {data[data.length - 1].ctl.toFixed(1)}
+          <div className="text-xl font-bold text-violet-600">
+            {latestWeight.toFixed(1)}
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">当前 CTL</div>
-        </div>
-        <div className="text-center">
-          <div className="text-xl font-bold text-amber-600">
-            {data[data.length - 1].atl.toFixed(1)}
-          </div>
-          <div className="text-xs text-gray-500 mt-0.5">当前 ATL</div>
+          <div className="text-xs text-gray-500 mt-0.5">当前体重</div>
         </div>
         <div className="text-center">
           <div className="text-xl font-bold text-gray-700">
-            {data[data.length - 1].form_value.toFixed(1)}
+            {avgWeight.toFixed(1)}
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">Form</div>
+          <div className="text-xs text-gray-500 mt-0.5">平均值</div>
+        </div>
+        <div className="text-center">
+          <div className="text-xl font-bold text-gray-700">
+            {(Math.max(...values) - Math.min(...values)).toFixed(1)}
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">波动幅度</div>
         </div>
       </div>
     </div>

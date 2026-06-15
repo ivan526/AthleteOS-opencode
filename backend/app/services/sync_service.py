@@ -83,7 +83,12 @@ class DataSyncService:
                 fatigue=item.atl,
                 form=item.form,
                 sleep_score=item.sleep_score,
-                hrv_score=item.hrv
+                sleep_seconds=item.sleep_seconds,
+                hrv_score=item.hrv,
+                hrv_sdnn=item.hrv_sdnn,
+                resting_hr=item.resting_hr,
+                weight=item.weight,
+                subjective_fatigue=item.subjective_fatigue
             )
             synced_count += 1
 

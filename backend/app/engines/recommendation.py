@@ -1,7 +1,17 @@
-from typing import List
+from typing import List, Optional
 from dataclasses import dataclass
 from app.schemas.common import CapacityStatus, RiskLevel, IntensityLevel, SportType
 from app.schemas.training import WorkoutRecommendation, WorkoutStructure, ExplanationItem
+
+
+@dataclass
+class SafetyCheckResult:
+    """安全规则检查结果"""
+    triggered: bool
+    day_type: str
+    intensity: IntensityLevel
+    reason: str
+    severity: str  # "warning" | "mandatory"
 
 
 @dataclass
@@ -27,6 +37,8 @@ class DailyRecommendationEngine:
         acwr: float = None,
         form: float = None,
         sleep_score: float = None,
+        hrv_trend: Optional[List[float]] = None,
+        recent_workouts: Optional[List[dict]] = None,
         preferred_sport: str = "running"
     ) -> RecommendationResult:
         """
@@ -40,13 +52,26 @@ class DailyRecommendationEngine:
             acwr: ACWR 值（可选）
             form: Form 值（可选）
             sleep_score: 睡眠评分（可选）
+            hrv_trend: 最近几天的 HRV 值（最新在前），用于检测连续下降
+            recent_workouts: 最近几天的训练记录，用于检测连续高强度和连续训练天数
             preferred_sport: 用户偏好运动
 
         Returns:
             RecommendationResult: 训练建议和解释
         """
-        # Hard Safety Rules 检查
-        day_type, intensity = cls._get_day_type(capacity_score, risk_level, form, acwr)
+        # Step 1: 执行所有 Hard Safety Rules 检查
+        safety_result = cls._check_all_safety_rules(
+            capacity_score, risk_level, risk_score, form, acwr, 
+            sleep_score, hrv_trend, recent_workouts
+        )
+
+        # Step 2: 如果触发强制安全规则，使用其建议
+        if safety_result and safety_result.triggered and safety_result.severity == "mandatory":
+            day_type = safety_result.day_type
+            intensity = safety_result.intensity
+        else:
+            # Step 3: 基于 Training Capacity 判断 Day Type
+            day_type, intensity = cls._get_day_type_by_capacity(capacity_score, risk_level)
 
         # 生成训练建议
         sport = SportType(preferred_sport) if preferred_sport in [s.value for s in SportType] else SportType.RUNNING
@@ -62,7 +87,7 @@ class DailyRecommendationEngine:
 
         # 生成解释
         explanations = cls._generate_explanations(
-            capacity_score, risk_score, acwr, form, sleep_score
+            capacity_score, risk_score, acwr, form, sleep_score, safety_result
         )
 
         return RecommendationResult(
@@ -70,32 +95,79 @@ class DailyRecommendationEngine:
             explanations=explanations
         )
 
-    @staticmethod
-    def _get_day_type(
+    @classmethod
+    def _check_all_safety_rules(
+        cls,
         capacity_score: float,
         risk_level: RiskLevel,
-        form: float = None,
-        acwr: float = None
-    ) -> tuple[str, IntensityLevel]:
-        """
-        确定训练日类型和强度等级
+        risk_score: float,
+        form: Optional[float],
+        acwr: Optional[float],
+        sleep_score: Optional[float],
+        hrv_trend: Optional[List[float]],
+        recent_workouts: Optional[List[dict]]
+    ) -> Optional[SafetyCheckResult]:
+        if capacity_score < 40:
+            return SafetyCheckResult(
+                triggered=True, day_type="recovery", intensity=IntensityLevel.RECOVERY,
+                reason="训练能力评分过低，恢复优先", severity="mandatory"
+            )
 
-        Returns:
-            (day_type, intensity_level)
-        """
-        # Hard Safety Rule 1: 高风险强制恢复
-        if risk_level == RiskLevel.HIGH_CAUTION:
-            return "recovery", IntensityLevel.RECOVERY
+        if risk_score > 0.75 or risk_level == RiskLevel.HIGH_CAUTION:
+            return SafetyCheckResult(
+                triggered=True, day_type="recovery", intensity=IntensityLevel.RECOVERY,
+                reason="训练风险过高，强制恢复模式", severity="mandatory"
+            )
 
-        # Hard Safety Rule 2: Form < -25 禁止高强度
         if form is not None and form < -25:
-            return "easy", IntensityLevel.EASY
+            return SafetyCheckResult(
+                triggered=True, day_type="easy", intensity=IntensityLevel.EASY,
+                reason="疲劳积累过高，禁止高强度训练", severity="mandatory"
+            )
 
-        # Hard Safety Rule 3: ACWR > 1.5 禁止高强度
         if acwr is not None and acwr > 1.5:
+            return SafetyCheckResult(
+                triggered=True, day_type="easy", intensity=IntensityLevel.EASY,
+                reason="负荷增长过快，禁止高强度训练", severity="mandatory"
+            )
+
+        if recent_workouts:
+            consecutive_hard_days = cls._count_consecutive_high_intensity(recent_workouts)
+            if consecutive_hard_days >= 3:
+                return SafetyCheckResult(
+                    triggered=True, day_type="easy", intensity=IntensityLevel.EASY,
+                    reason=f"连续 {consecutive_hard_days} 天高强度训练，今日安排轻松日", severity="mandatory"
+                )
+
+        if recent_workouts:
+            consecutive_training_days = cls._count_consecutive_training_days(recent_workouts)
+            if consecutive_training_days >= 7:
+                return SafetyCheckResult(
+                    triggered=True, day_type="recovery", intensity=IntensityLevel.RECOVERY,
+                    reason=f"连续训练 {consecutive_training_days} 天，建议今日休息或恢复训练", severity="warning"
+                )
+
+        if sleep_score is not None and sleep_score < 60:
+            return SafetyCheckResult(
+                triggered=True, day_type="easy", intensity=IntensityLevel.EASY,
+                reason="睡眠质量不佳，建议降低训练强度", severity="warning"
+            )
+
+        if hrv_trend and len(hrv_trend) >= 3 and cls._check_hrv_continuous_drop(hrv_trend):
+            return SafetyCheckResult(
+                triggered=True, day_type="recovery", intensity=IntensityLevel.RECOVERY,
+                reason="HRV 连续下降，自主神经恢复不佳，进入恢复模式", severity="warning"
+            )
+
+        return None
+
+    @staticmethod
+    def _get_day_type_by_capacity(
+        capacity_score: float, risk_level: RiskLevel
+    ) -> tuple[str, IntensityLevel]:
+        if risk_level == RiskLevel.ELEVATED:
             return "easy", IntensityLevel.EASY
 
-        # 基于 Training Capacity
         if capacity_score >= 81:
             return "hard", IntensityLevel.HARD
         elif capacity_score >= 61:
@@ -104,6 +176,37 @@ class DailyRecommendationEngine:
             return "easy", IntensityLevel.EASY
         else:
             return "recovery", IntensityLevel.RECOVERY
+
+    @staticmethod
+    def _count_consecutive_high_intensity(workouts: List[dict]) -> int:
+        count = 0
+        for workout in workouts[:7]:
+            intensity = workout.get('intensity')
+            if intensity in ['hard', 'interval', 'threshold']:
+                count += 1
+            else:
+                break
+        return count
+
+    @staticmethod
+    def _count_consecutive_training_days(workouts: List[dict]) -> int:
+        count = 0
+        for workout in workouts[:14]:
+            if workout.get('tss', 0) > 10:
+                count += 1
+            else:
+                break
+        return count
+
+    @staticmethod
+    def _check_hrv_continuous_drop(hrv_trend: List[float], threshold: float = 0.15) -> bool:
+        if len(hrv_trend) < 3:
+            return False
+        day1, day2, day3 = hrv_trend[0], hrv_trend[1], hrv_trend[2]
+        if day1 < day2 and day2 < day3:
+            total_drop = (day3 - day1) / day3 if day3 > 0 else 0
+            return total_drop >= threshold
+        return False
 
     @staticmethod
     def _generate_recovery_workout(sport: SportType) -> WorkoutRecommendation:
@@ -248,10 +351,17 @@ class DailyRecommendationEngine:
         risk: float,
         acwr: float = None,
         form: float = None,
-        sleep: float = None
+        sleep: float = None,
+        safety_result: Optional[SafetyCheckResult] = None
     ) -> List[ExplanationItem]:
-        """生成简洁解释"""
         explanations = []
+
+        if safety_result and safety_result.triggered:
+            explanations.append(ExplanationItem(
+                item_id="safety_rule",
+                text=safety_result.reason,
+                item_type="warning" if safety_result.severity == "warning" else "critical"
+            ))
 
         # 睡眠解释
         if sleep is not None:

@@ -35,13 +35,26 @@ class DailyAthleteState(Base):
     fitness = Column(Float)
     fatigue = Column(Float)
     form = Column(Float)
+    # 健康指标（来自 Intervals.icu Wellness 或用户手动录入）
     sleep_score = Column(Float)
+    sleep_seconds = Column(Float)
+    sleep_quality = Column(Float)  # 1-10 用户自评
+    hrv_sdnn = Column(Float)
     hrv_score = Column(Float)
+    resting_hr = Column(Float)
+    weight = Column(Float)
+    subjective_fatigue = Column(Float)  # 1-10 主观疲劳
+    muscle_soreness = Column(Float)  # 1-10 肌肉酸痛
+    stress_level = Column(Float)  # 1-10 压力水平
+    mood = Column(Float)  # 1-10 情绪状态
+    readiness_manual = Column(Float)  # 1-10 用户自评状态
+    notes = Column(String)  # 备注
+    # 训练负荷指标
     acwr = Column(Float)
     monotony = Column(Float)
     strain = Column(Float)
     adherence = Column(Float)
-    subjective_fatigue = Column(Float)
+    # 计算结果
     training_capacity = Column(Float)
     capacity_status = Column(String)
     training_risk_score = Column(Float)

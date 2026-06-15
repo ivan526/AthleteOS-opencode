@@ -78,6 +78,67 @@ export interface HistoryDataPoint {
   atl: number
   form_value: number
   tss: number
+  training_capacity: number | null
+  weight: number | null
+  resting_hr: number | null
+}
+
+export interface Activity {
+  id: number
+  provider_activity_id: string | null
+  sport: string | null
+  start_time: string
+  duration_seconds: number | null
+  distance_meters: number | null
+  tss: number | null
+  intensity_factor: number | null
+  avg_hr: number | null
+  max_hr: number | null
+  avg_power: number | null
+  normalized_power: number | null
+  avg_pace: number | null
+  elevation_gain: number | null
+}
+
+export interface DailyState {
+  date_val: string
+  sleep_quality: number | null
+  subjective_fatigue: number | null
+  muscle_soreness: number | null
+  stress_level: number | null
+  mood: number | null
+  readiness_manual: number | null
+  resting_hr: number | null
+  hrv_sdnn: number | null
+  weight: number | null
+  notes: string | null
+  training_capacity: number | null
+  training_risk_level: string | null
+}
+
+export interface DailyStateUpdate {
+  date_val: string
+  sleep_quality?: number | null
+  subjective_fatigue?: number | null
+  muscle_soreness?: number | null
+  stress_level?: number | null
+  mood?: number | null
+  readiness_manual?: number | null
+  resting_hr?: number | null
+  hrv_sdnn?: number | null
+  weight?: number | null
+  notes?: string | null
+}
+
+export interface AdjustedRecommendation {
+  success: boolean
+  original_type: string
+  adjusted_type: string
+  title: string
+  duration_minutes: number
+  intensity: string
+  reason: string
+  training_capacity_impact: number
 }
 
 export interface WeeklyReviewResponse {

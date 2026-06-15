@@ -2,6 +2,10 @@ import type {
   DailyDataResponse,
   HistoryDataPoint,
   WeeklyReviewResponse,
+  Activity,
+  DailyState,
+  DailyStateUpdate,
+  AdjustedRecommendation,
   User,
   TokenResponse,
   LoginRequest,
@@ -93,6 +97,28 @@ class ApiClient {
 
   async getWeeklyReview(): Promise<WeeklyReviewResponse> {
     return this.request<WeeklyReviewResponse>('/training/weekly-review')
+  }
+
+  async getActivities(days: number = 30): Promise<Activity[]> {
+    return this.request<Activity[]>(`/training/activities?days=${days}`)
+  }
+
+  async getDailyState(date: string): Promise<DailyState> {
+    return this.request<DailyState>(`/training/daily-state/${date}`)
+  }
+
+  async updateDailyState(data: DailyStateUpdate): Promise<DailyState> {
+    return this.request<DailyState>('/training/daily-state', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async submitFeedback(feedbackType: string, dateVal?: string): Promise<AdjustedRecommendation> {
+    return this.request<AdjustedRecommendation>('/training/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ feedback_type: feedbackType, date_val: dateVal })
+    })
   }
 
   // Sync endpoints
