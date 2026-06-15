@@ -26,11 +26,11 @@ export function ProfessionalDetails({ details }: ProfessionalDetailsProps) {
                 <div className="flex items-baseline justify-between mb-1">
                   <span className="text-sm text-gray-500">{detail.label}</span>
                   <span className="text-lg font-semibold text-gray-800">
-                    {detail.value}
+                    {typeof detail.numeric_value === 'number' ? detail.numeric_value.toFixed(1) : detail.numeric_value}
                     {detail.unit && <span className="text-xs text-gray-500 ml-1">{detail.unit}</span>}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400">{detail.description}</p>
+                <p className="text-xs text-gray-400">{detail.description_text}</p>
               </div>
             ))}
           </div>

@@ -7,7 +7,9 @@ interface ExplanationCardProps {
   explanations: ExplanationItem[]
 }
 
-const typeConfig = {
+type ExplanationType = 'positive' | 'neutral' | 'warning'
+
+const typeConfig: Record<ExplanationType, { icon: string; color: string; bg: string }> = {
   positive: { icon: '✓', color: 'text-green-600', bg: 'bg-green-50' },
   neutral: { icon: 'ℹ', color: 'text-blue-600', bg: 'bg-blue-50' },
   warning: { icon: '⚠', color: 'text-amber-600', bg: 'bg-amber-50' }
@@ -22,9 +24,10 @@ export function ExplanationCard({ explanations }: ExplanationCardProps) {
       <CardContent>
         <ul className="space-y-3">
           {explanations.map((item) => {
-            const config = typeConfig[item.type]
+            const itemType = item.item_type as ExplanationType
+            const config = typeConfig[itemType] || typeConfig.neutral
             return (
-              <li key={item.id} className="flex items-start gap-3">
+              <li key={item.item_id} className="flex items-start gap-3">
                 <span className={`flex-shrink-0 w-6 h-6 rounded-full ${config.bg} ${config.color} flex items-center justify-center text-sm`}>
                   {config.icon}
                 </span>

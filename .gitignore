@@ -1,0 +1,6 @@
+.athleteos-pids
+**/__pycache__/
+*.pyc
+*.db
+.env
+node_modules/

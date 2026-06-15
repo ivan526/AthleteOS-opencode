@@ -5,10 +5,32 @@ import { WorkoutRecommendationCard } from '@/components/training/WorkoutRecommen
 import { ExplanationCard } from '@/components/training/ExplanationCard'
 import { FeedbackActionBar } from '@/components/training/FeedbackActionBar'
 import { ProfessionalDetails } from '@/components/training/ProfessionalDetails'
-import { todayData } from '@/mocks/todayData'
+import { TodayPageSkeleton } from '@/components/ui/skeleton'
+import { useTodayData } from '@/lib/hooks'
 
 export default function TodayPage() {
-  const formattedDate = new Date(todayData.date).toLocaleDateString('zh-CN', {
+  const { data, loading, error } = useTodayData()
+
+  if (loading) {
+    return <TodayPageSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">加载失败</p>
+          <p className="text-gray-500 text-sm">{error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return null
+  }
+
+  const formattedDate = new Date(data.date_val).toLocaleDateString('zh-CN', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -21,11 +43,11 @@ export default function TodayPage() {
         <p className="text-sm text-gray-500">{formattedDate}</p>
       </div>
 
-      <CapacityCard capacity={todayData.trainingCapacity} />
-      <WorkoutRecommendationCard recommendation={todayData.recommendation} />
-      <ExplanationCard explanations={todayData.explanations} />
+      <CapacityCard capacity={data.training_capacity} />
+      <WorkoutRecommendationCard recommendation={data.recommendation} />
+      <ExplanationCard explanations={data.explanations} />
       <FeedbackActionBar />
-      <ProfessionalDetails details={todayData.professionalDetails} />
+      <ProfessionalDetails details={data.professional_details} />
     </div>
   )
 }

@@ -4,100 +4,124 @@ export type RiskLevel = 'low' | 'moderate' | 'elevated' | 'high_caution'
 
 export type DataQuality = 'high' | 'medium' | 'low' | 'insufficient'
 
+export type IntensityLevel = 'easy' | 'moderate' | 'hard' | 'recovery'
+
+export type SportType = 'running' | 'cycling' | 'strength' | 'recovery'
+
+export interface RiskFactor {
+  factor_name: string
+  factor_value: number
+  message: string
+}
+
 export interface TrainingCapacity {
   score: number
   status: CapacityStatus
-  statusText: string
+  status_text: string
   confidence: number
-  dataQuality: DataQuality
+  data_quality: DataQuality
   trend: number
-  subscores: {
-    sleep: number
-    hrv: number
-    form: number
-    acwr: number
-    monotony: number
-    adherence: number
-    subjectiveFatigue: number
-    recoveryTrend: number
-  }
+  dimension_scores: Record<string, number>
 }
 
 export interface TrainingRisk {
   score: number
   level: RiskLevel
-  userLabel: string
+  user_label: string
   confidence: number
-  dataQuality: DataQuality
-  mainFactors: {
-    factor: string
-    value: number
-    message: string
-  }[]
-  safeRecommendation: string
+  data_quality: DataQuality
+  main_factors: RiskFactor[]
+  safe_recommendation: string
+}
+
+export interface WorkoutStructure {
+  warmup?: string
+  main_set?: string
+  cooldown?: string
 }
 
 export interface WorkoutRecommendation {
-  sport: 'running' | 'cycling' | 'strength' | 'recovery'
-  type: string
+  sport: SportType
+  workout_type: string
   title: string
-  durationMinutes: number
-  expectedTss: number
-  intensity: 'easy' | 'moderate' | 'hard' | 'recovery'
-  structure?: {
-    warmup?: string
-    mainSet?: string
-    cooldown?: string
-  }
+  duration_minutes: number
+  expected_tss: number
+  intensity: IntensityLevel
+  structure?: WorkoutStructure
 }
 
 export interface ExplanationItem {
-  id: string
+  item_id: string
   text: string
-  type: 'positive' | 'neutral' | 'warning'
+  item_type: string
 }
 
 export interface ProfessionalDetail {
   label: string
-  value: number | string
+  numeric_value: number
   unit?: string
-  description: string
+  description_text: string
 }
 
-export interface DailyData {
-  date: string
-  trainingCapacity: TrainingCapacity
-  trainingRisk: TrainingRisk
+export interface DailyDataResponse {
+  date_val: string
+  training_capacity: TrainingCapacity
+  training_risk: TrainingRisk
   recommendation: WorkoutRecommendation
   explanations: ExplanationItem[]
-  professionalDetails: ProfessionalDetail[]
-}
-
-export interface AthleteProfile {
-  id: string
-  name: string
-  primarySport: 'running' | 'cycling' | 'triathlon'
-  timezone: string
-  dataLevel: 'A' | 'B' | 'C' | 'D'
-}
-
-export interface WeeklyReview {
-  weekStart: string
-  weekEnd: string
-  summary: string
-  adherence: number
-  weeklyTss: number
-  loadChangeVsLastWeek: number
-  trainingRiskLevel: RiskLevel
-  highlights: string[]
-  warnings: string[]
-  nextWeekRecommendation: string
+  professional_details: ProfessionalDetail[]
 }
 
 export interface HistoryDataPoint {
-  date: string
+  date_val: string
   ctl: number
   atl: number
-  form: number
+  form_value: number
   tss: number
+}
+
+export interface WeeklyReviewResponse {
+  week_start: string
+  week_end: string
+  summary: string
+  adherence: number
+  weekly_tss: number
+  load_change_vs_last_week: number
+  training_risk_level: RiskLevel
+  highlights: string[]
+  warnings: string[]
+  next_week_recommendation: string
+}
+
+// Auth Types
+export interface User {
+  id: number
+  email: string
+  name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  email: string
+  name: string
+  password: string
+}
+
+export interface TokenResponse {
+  access_token: string
+  token_type: string
+}
+
+export interface AuthState {
+  user: User | null
+  token: string | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  error: string | null
 }

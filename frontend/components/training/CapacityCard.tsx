@@ -75,7 +75,7 @@ export function CapacityCard({ capacity }: CapacityCardProps) {
           </div>
 
           <div className={`inline-block px-4 py-1.5 rounded-full ${config.bgColor} ${config.color} text-sm font-medium mb-3`}>
-            {capacity.statusText}
+            {capacity.status_text}
           </div>
 
           <div className="flex items-center justify-center gap-6 text-sm">

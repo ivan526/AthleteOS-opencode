@@ -59,7 +59,7 @@ export function LoadTrendChart({ data }: LoadTrendChartProps) {
             <div className="text-xs text-gray-500">当前 ATL</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-800">{data[data.length - 1].form}</div>
+            <div className="text-2xl font-bold text-gray-800">{data[data.length - 1].form_value.toFixed(1)}</div>
             <div className="text-xs text-gray-500">Form</div>
           </div>
         </div>

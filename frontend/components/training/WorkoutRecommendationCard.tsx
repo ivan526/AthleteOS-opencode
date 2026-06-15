@@ -47,13 +47,13 @@ export function WorkoutRecommendationCard({ recommendation }: WorkoutRecommendat
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {recommendation.durationMinutes} 分钟
+                {recommendation.duration_minutes} 分钟
               </span>
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                预计 TSS {recommendation.expectedTss}
+                预计 TSS {recommendation.expected_tss}
               </span>
             </div>
 
@@ -65,10 +65,10 @@ export function WorkoutRecommendationCard({ recommendation }: WorkoutRecommendat
                     <span className="text-gray-700">{recommendation.structure.warmup}</span>
                   </div>
                 )}
-                {recommendation.structure.mainSet && (
+                 {recommendation.structure.main_set && (
                   <div className="flex gap-2">
                     <span className="text-gray-500 min-w-16">主课</span>
-                    <span className="text-gray-700">{recommendation.structure.mainSet}</span>
+                    <span className="text-gray-700">{recommendation.structure.main_set}</span>
                   </div>
                 )}
                 {recommendation.structure.cooldown && (

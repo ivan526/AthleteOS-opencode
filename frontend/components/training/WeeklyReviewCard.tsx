@@ -2,10 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import type { WeeklyReview } from '@/lib/types'
+import type { WeeklyReviewResponse } from '@/lib/types'
 
 interface WeeklyReviewCardProps {
-  review: WeeklyReview
+  review: WeeklyReviewResponse
 }
 
 const riskLevelConfig = {
@@ -16,20 +16,20 @@ const riskLevelConfig = {
 }
 
 export function WeeklyReviewCard({ review }: WeeklyReviewCardProps) {
-  const riskConfig = riskLevelConfig[review.trainingRiskLevel]
+  const riskConfig = riskLevelConfig[review.training_risk_level]
 
   return (
     <Card className="border-0 shadow-sm bg-white">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-medium text-gray-800">本周总结</CardTitle>
         <p className="text-sm text-gray-500">
-          {new Date(review.weekStart).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} - {new Date(review.weekEnd).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+          {new Date(review.week_start).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} - {new Date(review.week_end).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-emerald-600">{review.weeklyTss}</div>
+            <div className="text-2xl font-bold text-emerald-600">{review.weekly_tss}</div>
             <div className="text-xs text-gray-500">本周 TSS</div>
           </div>
           <div className="text-center">
@@ -37,7 +37,7 @@ export function WeeklyReviewCard({ review }: WeeklyReviewCardProps) {
             <div className="text-xs text-gray-500">完成率</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">+{Math.round(review.loadChangeVsLastWeek * 100)}%</div>
+            <div className="text-2xl font-bold text-green-600">+{Math.round(review.load_change_vs_last_week * 100)}%</div>
             <div className="text-xs text-gray-500">较上周</div>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function WeeklyReviewCard({ review }: WeeklyReviewCardProps) {
             </Badge>
           </div>
           <p className="text-sm text-gray-700 bg-emerald-50 p-3 rounded-lg">
-            {review.nextWeekRecommendation}
+            {review.next_week_recommendation}
           </p>
         </div>
       </CardContent>
