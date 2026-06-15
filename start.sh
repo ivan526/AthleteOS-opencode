@@ -14,8 +14,8 @@ BACKEND_DIR="$PROJECT_DIR/backend"
 FRONTEND_DIR="$PROJECT_DIR/frontend"
 
 # 端口配置
-BACKEND_PORT=8000
-FRONTEND_PORT=3000
+BACKEND_PORT=8001
+FRONTEND_PORT=8080
 
 # 颜色输出
 RED='\033[0;31m'
@@ -144,7 +144,7 @@ start_frontend() {
     fi
     
     # 后台启动前端
-    nohup npm run dev > /tmp/athleteos-frontend.log 2>&1 &
+    nohup npm run dev -- --port $FRONTEND_PORT > /tmp/athleteos-frontend.log 2>&1 &
     FRONTEND_PID=$!
     
     # 等待启动

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useAuthStore } from '@/lib/auth-store'
 import { apiClient } from '@/lib/api'
 import { successToast, errorToast } from '@/lib/toast'
@@ -20,6 +21,7 @@ export default function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasSavedCredentials, setHasSavedCredentials] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -153,23 +155,48 @@ export default function SettingsPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 placeholder="i212288"
               />
-            </div>
-          </div>
+             </div>
 
-          <div className="flex gap-2">
+             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+               <h4 className="text-sm font-medium text-emerald-800 mb-2">📖 如何获取 Intervals.icu 凭据？</h4>
+               <ol className="text-xs text-emerald-700 space-y-1 list-decimal list-inside">
+                 <li>登录 <a href="https://intervals.icu" target="_blank" rel="noopener noreferrer" className="underline">intervals.icu</a>，连接你的运动平台（Strava/Garmin 等）</li>
+                 <li>点击右上角头像 → Settings → API Keys</li>
+                 <li>创建一个新的 API Key（只读权限即可）</li>
+                 <li>回到 Settings 页面，点击你的名字，查看页面 URL 中的 Athlete ID（如 i212288）</li>
+               </ol>
+               <p className="text-xs text-emerald-600 mt-2">💡 数据同步后会自动计算您的训练能力和风险评估</p>
+             </div>
+           </div>
+
+           <div className="flex gap-2">
             <Button
-              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white relative overflow-hidden"
               onClick={handleSaveSettings}
               disabled={isSaving}
             >
-              {isSaving ? '保存中...' : '保存设置'}
+              {isSaving ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                  保存中...
+                </span>
+              ) : (
+                '保存设置'
+              )}
             </Button>
             <Button
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white relative overflow-hidden"
               onClick={handleSync}
               disabled={isSyncing}
             >
-              {isSyncing ? '同步中...' : isConnected ? '重新同步' : '同步数据'}
+              {isSyncing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                  同步中...
+                </span>
+              ) : (
+                isConnected ? '重新同步' : '同步数据'
+              )}
             </Button>
           </div>
 
@@ -179,11 +206,7 @@ export default function SettingsPage() {
             </p>
           )}
 
-          {syncMessage && (
-            <p className={`text-xs text-center ${syncMessage.includes('成功') ? 'text-emerald-600' : 'text-red-600'}`}>
-              {syncMessage}
-            </p>
-          )}
+
 
           <p className="text-xs text-gray-500 text-center">
             连接后将同步您的训练数据、负荷指标和恢复数据
@@ -244,10 +267,23 @@ export default function SettingsPage() {
       <Button
         variant="destructive"
         className="w-full bg-red-500 hover:bg-red-600 text-white"
-        onClick={logout}
+        onClick={() => setShowLogoutConfirm(true)}
       >
         退出登录
       </Button>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={() => {
+          setShowLogoutConfirm(false)
+          logout()
+        }}
+        title="确认退出登录"
+        message="确定要退出当前账号吗？下次需要重新登录才能使用。"
+        confirmText="确认退出"
+        cancelText="取消"
+      />
     </div>
   )
 }
