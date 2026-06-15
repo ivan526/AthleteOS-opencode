@@ -260,7 +260,7 @@ class TrainingDataService:
                 ProfessionalDetail(
                     label="数据质量",
                     numeric_value=0,
-                    description_text=cls._get_data_quality_text(capacity_result.data_quality)
+                    description_text=TrainingDataService._get_data_quality_text(capacity_result.data_quality)
                 ),
                 ProfessionalDetail(
                     label="置信度",
